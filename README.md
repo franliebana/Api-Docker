@@ -38,7 +38,7 @@ Returns a simple status message to verify the API is working:
 ```json
 {
   "status": "ok",
-  "message": "Probando el sistema completo"
+  "message": "CI/CD pipeline with FastAPI"
 }
 ```
 
