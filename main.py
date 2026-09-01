@@ -4,4 +4,4 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"status": "ok", "message": "Mi primer contenedor levantado"}
+    return {"status": "ok", "message": "Probando el sistema completo"}
