@@ -1,77 +1,118 @@
 # API Docker
 
-API sencilla creada con FastAPI y ejecutada con Uvicorn dentro de Docker.
+A simple FastAPI application containerized with Docker and deployed to Render.
 
-## Requisitos
+## Overview
+
+This project exposes a minimal REST API that returns a health/status message. It can be run locally with Docker or directly with Python, and it is also configured for CI with GitHub Actions and continuous deployment with Render.
+
+## Requirements
 
 - Docker
-- Python 3.10 o posterior para ejecutarla sin Docker
+- Python 3.10 or newer (optional, for local non-Docker execution)
+- GitHub account with GitHub Actions enabled
+- Render account for deployment
 
-## Ejecutar con Docker
+## Run with Docker
 
-Construye la imagen:
+Build the image:
 
 ```bash
 docker build -t api-docker .
 ```
 
-Inicia el contenedor:
+Start the container:
 
 ```bash
 docker run --rm -p 8000:8000 api-docker
 ```
 
-La API estará disponible en <http://localhost:8000>.
+The API will be available at <http://localhost:8000>.
 
-## Endpoint disponible
+## Available endpoint
 
 ### `GET /`
 
-Devuelve un mensaje para comprobar que la API está funcionando:
+Returns a simple status message to verify the API is working:
 
 ```json
 {
   "status": "ok",
-  "message": "Mi primer contenedor levantado"
+  "message": "Probando el sistema completo"
 }
 ```
 
-Puedes probarlo con:
+You can test it with:
 
 ```bash
 curl http://localhost:8000/
 ```
 
-La documentación interactiva de FastAPI está disponible en <http://localhost:8000/docs>.
+FastAPI interactive documentation is available at <http://localhost:8000/docs>.
 
-## Ejecutar localmente
+## Run locally without Docker
 
-Crea y activa un entorno virtual:
+Create and activate a virtual environment:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Instala las dependencias y arranca el servidor:
+Install dependencies and start the server:
 
 ```bash
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-Para salir del entorno virtual:
+To deactivate the virtual environment:
 
 ```bash
 deactivate
 ```
 
-## Estructura
+## CI/CD
+
+### Continuous Integration
+
+A GitHub Actions workflow is configured in [.github/workflows/ci.yaml](.github/workflows/ci.yaml). It runs on pushes to the `main` branch and validates the Docker build.
+
+### Continuous Deployment
+
+The application is deployed on Render using the public URL:
+
+https://api-docker-epwx.onrender.com/
+
+This deployment is configured to build and launch the app from the repository automatically after changes are pushed to the deployment branch.
+
+## Project structure
 
 ```text
 .
+├── .github/
+│   └── workflows/
+│       └── ci.yaml
 ├── Dockerfile
 ├── main.py
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+└── .gitignore
 ```
+
+## Useful commands
+
+```bash
+# Build Docker image
+docker build -t api-docker .
+
+# Run container
+docker run --rm -p 8000:8000 api-docker
+
+# Run locally with uvicorn
+uvicorn main:app --reload
+```
+
+## Notes
+
+This project is intended as a minimal example of combining FastAPI, Docker, GitHub Actions, and Render for a simple API deployment workflow.
