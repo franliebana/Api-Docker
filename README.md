@@ -62,8 +62,20 @@ source .venv/bin/activate
 Install dependencies and start the server:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 uvicorn main:app --reload
+```
+
+Run tests with `pytest`:
+
+```bash
+pytest
+```
+
+To run a specific test with more detail:
+
+```bash
+pytest -v tests/test_main.py
 ```
 
 To deactivate the virtual environment:
@@ -76,7 +88,7 @@ deactivate
 
 ### Continuous Integration
 
-A GitHub Actions workflow is configured in [.github/workflows/ci.yaml](.github/workflows/ci.yaml). It runs on pushes to the `main` branch and validates the Docker build.
+A GitHub Actions workflow is configured in [.github/workflows/ci.yaml](.github/workflows/ci.yaml). It runs on pushes to the `main` branch, installs the application and development dependencies, runs the tests, and validates the Docker build.
 
 ### Continuous Deployment
 
@@ -97,6 +109,9 @@ This deployment is configured to build and launch the app from the repository au
 ├── main.py
 ├── README.md
 ├── requirements.txt
+├── requirements-dev.txt
+├── tests/
+│   └── test_main.py
 └── .gitignore
 ```
 
@@ -111,6 +126,9 @@ docker run --rm -p 8000:8000 api-docker
 
 # Run locally with uvicorn
 uvicorn main:app --reload
+
+# Run tests
+python -m pytest
 ```
 
 ## Notes
