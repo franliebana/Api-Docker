@@ -1,0 +1,27 @@
+services:
+  db:
+    # PostgreSQL is the project's local database.
+    image: postgres:16-alpine
+    container_name: api-docker-db
+    restart: unless-stopped
+    # These values can be overridden through a .env file.
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-api_docker}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    # Makes PostgreSQL available at localhost:5432 on the host machine.
+    ports:
+      - "5432:5432"
+    # Keeps the data when the container is stopped or recreated.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Checks that PostgreSQL is ready to accept connections.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-api_docker}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  # Docker-managed volume for PostgreSQL data.
+  postgres_data:

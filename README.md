@@ -15,6 +15,34 @@ This project exposes a minimal REST API that returns a health/status message. It
 
 ## Run with Docker
 
+Start the local PostgreSQL database:
+
+```bash
+docker compose up -d db
+```
+
+The database uses the following local defaults:
+
+```text
+Database: api_docker
+User: postgres
+Password: postgres
+Host: localhost
+Port: 5432
+```
+
+To stop the database while keeping its data:
+
+```bash
+docker compose stop db
+```
+
+To stop it and delete the stored data:
+
+```bash
+docker compose down -v
+```
+
 Build the image:
 
 ```bash
@@ -106,6 +134,7 @@ This deployment is configured to build and launch the app from the repository au
 │   └── workflows/
 │       └── ci.yaml
 ├── Dockerfile
+├── docker-compose.yml
 ├── main.py
 ├── README.md
 ├── requirements.txt
