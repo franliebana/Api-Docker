@@ -4,12 +4,13 @@ A simple FastAPI application containerized with Docker and deployed to Render.
 
 ## Overview
 
-This project exposes a minimal REST API that returns a health/status message. It can be run locally with Docker or directly with Python, and it is also configured for CI with GitHub Actions and continuous deployment with Render.
+This project exposes a FastAPI REST API with a PostgreSQL database. It currently includes user creation, user lookup, and user deletion, with password hashing and database migrations managed by Alembic. The API can be run locally with Python while PostgreSQL runs in Docker.
 
 ## Requirements
 
 - Docker
 - Python 3.10 or newer (optional, for local non-Docker execution)
+- PostgreSQL (provided locally through Docker Compose)
 - GitHub account with GitHub Actions enabled
 - Render account for deployment
 
@@ -30,6 +31,15 @@ Password: postgres
 Host: localhost
 Port: 5432
 ```
+
+Check that PostgreSQL is ready:
+
+```bash
+docker compose ps
+docker compose exec db pg_isready -U postgres -d api_docker
+```
+
+The API is currently run locally with Python. The API container will be added to Docker Compose later.
 
 To stop the database while keeping its data:
 
@@ -57,7 +67,7 @@ docker run --rm -p 8000:8000 api-docker
 
 The API will be available at <http://localhost:8000>.
 
-## Available endpoint
+## Available endpoints
 
 ### `GET /`
 
@@ -78,6 +88,41 @@ curl http://localhost:8000/
 
 FastAPI interactive documentation is available at <http://localhost:8000/docs>.
 
+### Users
+
+Create a user:
+
+```text
+POST /users
+```
+
+```json
+{
+  "email": "user@example.com",
+  "password": "secret123"
+}
+```
+
+List users:
+
+```text
+GET /users
+```
+
+Get one user:
+
+```text
+GET /users/{user_id}
+```
+
+Delete one user:
+
+```text
+DELETE /users/{user_id}
+```
+
+Passwords are stored as secure hashes and are never included in API responses.
+
 ## Run locally without Docker
 
 Create and activate a virtual environment:
@@ -92,6 +137,24 @@ Install dependencies and start the server:
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
 uvicorn main:app --reload
+```
+
+The application uses this local database URL by default:
+
+```text
+postgresql+psycopg://postgres:postgres@localhost:5432/api_docker
+```
+
+Apply database migrations before starting the API:
+
+```bash
+alembic upgrade head
+```
+
+Alternatively, use the project virtual environment explicitly:
+
+```bash
+.venv/bin/python -m alembic upgrade head
 ```
 
 Run tests with `pytest`:
@@ -135,6 +198,17 @@ This deployment is configured to build and launch the app from the repository au
 │       └── ci.yaml
 ├── Dockerfile
 ├── docker-compose.yml
+├── database.py
+├── models.py
+├── schemas.py
+├── routers/
+│   ├── __init__.py
+│   └── users.py
+├── alembic/
+│   ├── env.py
+│   └── versions/
+│       └── f22fe3ed6021_create_users_and_projects.py
+├── alembic.ini
 ├── main.py
 ├── README.md
 ├── requirements.txt
@@ -158,8 +232,14 @@ uvicorn main:app --reload
 
 # Run tests
 python -m pytest
+
+# Apply database migrations
+alembic upgrade head
+
+# Show database row counts
+docker compose exec db psql -U postgres -d api_docker -c "SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM projects;"
 ```
 
 ## Notes
 
-This project is intended as a minimal example of combining FastAPI, Docker, GitHub Actions, and Render for a simple API deployment workflow.
+This project is intended as an example of combining FastAPI, PostgreSQL, SQLAlchemy, Alembic, Docker, GitHub Actions, and Render. The current database contains `users` and `projects` tables; project endpoints and authentication will be added in a later step.
