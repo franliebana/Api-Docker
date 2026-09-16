@@ -4,7 +4,7 @@ A simple FastAPI application containerized with Docker and deployed to Render.
 
 ## Overview
 
-This project exposes a FastAPI REST API with a PostgreSQL database. It currently includes user creation, user lookup, and user deletion, with password hashing and database migrations managed by Alembic. The API can be run locally with Python while PostgreSQL runs in Docker.
+This project exposes a FastAPI REST API with a PostgreSQL database. It currently includes user creation, user lookup, user deletion, and project CRUD operations, with password hashing and database migrations managed by Alembic. Both the API and PostgreSQL run through Docker Compose.
 
 ## Requirements
 
@@ -16,10 +16,10 @@ This project exposes a FastAPI REST API with a PostgreSQL database. It currently
 
 ## Run with Docker
 
-Start the local PostgreSQL database:
+Start the API and PostgreSQL database:
 
 ```bash
-docker compose up -d db
+docker compose up --build -d
 ```
 
 The database uses the following local defaults:
@@ -39,7 +39,13 @@ docker compose ps
 docker compose exec db pg_isready -U postgres -d api_docker
 ```
 
-The API is currently run locally with Python. The API container will be added to Docker Compose later.
+The API will be available at <http://localhost:8000> and PostgreSQL at `localhost:5432`.
+
+View the API logs:
+
+```bash
+docker compose logs -f api
+```
 
 To stop the database while keeping its data:
 
@@ -132,12 +138,14 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install dependencies and start the server:
+Install dependencies and start the server locally:
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
 uvicorn main:app --reload
 ```
+
+When running the API outside Docker, PostgreSQL must still be running and the default database URL uses `localhost`.
 
 The application uses this local database URL by default:
 
@@ -227,7 +235,10 @@ docker build -t api-docker .
 # Run container
 docker run --rm -p 8000:8000 api-docker
 
-# Run locally with uvicorn
+# Run the API and database with Docker Compose
+docker compose up --build -d
+
+# Run the API locally with uvicorn
 uvicorn main:app --reload
 
 # Run tests
@@ -242,4 +253,4 @@ docker compose exec db psql -U postgres -d api_docker -c "SELECT COUNT(*) FROM u
 
 ## Notes
 
-This project is intended as an example of combining FastAPI, PostgreSQL, SQLAlchemy, Alembic, Docker, GitHub Actions, and Render. The current database contains `users` and `projects` tables; project endpoints and authentication will be added in a later step.
+This project is intended as an example of combining FastAPI, PostgreSQL, SQLAlchemy, Alembic, Docker, GitHub Actions, and Render. The current database contains `users` and `projects` tables; authentication will be added in a later step.
