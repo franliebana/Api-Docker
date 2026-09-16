@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User
-from schemas import UserCreate, UserResponse
+from schemas import UserCreate, UserResponse, UserUpdate
 
 
 # Groups all user-related endpoints under /users.
@@ -52,6 +52,44 @@ def get_user(user_id: int, db: Session = Depends(get_db)) -> User:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
+    return user
+
+
+@router.patch("/{user_id}", response_model=UserResponse)
+def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends(get_db),) -> User:
+    # Look up the user before updating it.
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    # Convert the Pydantic model to a dictionary, excluding unset fields to allow partial updates.
+    update_data = user_data.model_dump(exclude_unset=True)
+
+    # Check that the new email is not already taken by another user before updating it.
+    if "email" in update_data and update_data["email"] != user.email:
+        # Check for existing users with the same email, excluding the current user.
+        existing_user = db.scalar(
+            select(User).where(
+                User.email == update_data["email"],
+                User.id != user_id,
+            )
+        )
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A user with this email already exists",
+            )
+        user.email = update_data["email"]
+
+    # Update the password hash if a new password is provided.
+    if "password" in update_data:
+        user.password_hash = password_hash.hash(update_data["password"])
+
+    db.commit()
+    db.refresh(user)
     return user
 
 
