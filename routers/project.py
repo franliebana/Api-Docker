@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
+from routers.auth import get_current_user
 from models import Project, User
 from schemas import ProjectCreate, ProjectResponse, ProjectUpdate
 
@@ -10,7 +11,7 @@ from schemas import ProjectCreate, ProjectResponse, ProjectUpdate
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
-def create_project(project_data: ProjectCreate, db: Session = Depends(get_db)) -> Project:
+def create_project(project_data: ProjectCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> Project:
     # Prevent duplicate projects before inserting the new project.
     existing_project = db.scalar(select(Project).where(Project.name == project_data.name))
     if existing_project:
@@ -19,19 +20,11 @@ def create_project(project_data: ProjectCreate, db: Session = Depends(get_db)) -
             detail="A project with this name already exists",
         )
     
-    # Check if the owner exists before creating the project.
-    owner = db.get(User, project_data.owner_id)
-    if owner is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Owner not found",
-        )      
-                    
     # Create a new project instance.
     project = Project(
         name=project_data.name,
         description=project_data.description,
-        owner_id=project_data.owner_id,
+        owner_id=current_user.id,
     )
 
     # Persist the project and load database-generated fields such as id and created_at.
@@ -43,16 +36,23 @@ def create_project(project_data: ProjectCreate, db: Session = Depends(get_db)) -
 
 
 @router.get("", response_model=list[ProjectResponse])
-def list_projects(db: Session = Depends(get_db)) -> list[Project]:
+def list_projects(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> list[Project]:
     # Return projects ordered by their database id.
-    return list(db.scalars(select(Project).order_by(Project.id)))
+    return list(
+        db.scalars(
+            select(Project)
+            .where(Project.owner_id == current_user.id)
+            .order_by(Project.id)
+        )
+    )
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
-def get_project(project_id: int, db: Session = Depends(get_db)) -> Project:
+def get_project(project_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user),
+) -> Project:
     # Look up a project by its primary key.
     project = db.get(Project, project_id)
-    if project is None:
+    if project is None or project.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found",
@@ -61,10 +61,11 @@ def get_project(project_id: int, db: Session = Depends(get_db)) -> Project:
 
 
 @router.patch("/{project_id}", response_model=ProjectResponse)
-def update_project(project_id: int, project_data: ProjectUpdate, db: Session = Depends(get_db),) -> Project:
+def update_project(project_id: int, project_data: ProjectUpdate, db: Session = Depends(get_db),
+                   current_user: User = Depends(get_current_user)) -> Project:
     # Look up the project before updating it.
     project = db.get(Project, project_id)
-    if project is None:
+    if project is None or project.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found",
@@ -99,10 +100,10 @@ def update_project(project_id: int, project_data: ProjectUpdate, db: Session = D
 
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_project(project_id: int, db: Session = Depends(get_db)) -> None:
+def delete_project(project_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> None:
     # Look up the project before deleting it.
     project = db.get(Project, project_id)
-    if project is None:
+    if project is None or project.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found",

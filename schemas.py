@@ -33,12 +33,20 @@ class UserResponse(BaseModel):
 	created_at: datetime
 
 
+class LoginRequest(BaseModel):
+	email: EmailStr
+	password: str
+
+
+class TokenResponse(BaseModel):
+	access_token: str
+	token_type: str = "bearer"
+
+
 # Data required to create a new project.
 class ProjectCreate(BaseModel):
-	# This will later come from the authenticated user.
 	name: str = Field(min_length=1, max_length=255) # Name must be at least 1 character long and cannot exceed 255 characters.
 	description: str | None = Field(default=None, max_length=2000) # Description can be null, but if provided, it must not exceed 2000 characters.
-	owner_id: int
 
 
 # Optional fields accepted when updating a project.
