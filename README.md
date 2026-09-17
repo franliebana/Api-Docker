@@ -94,6 +94,36 @@ curl http://localhost:8000/
 
 FastAPI interactive documentation is available at <http://localhost:8000/docs>.
 
+### Authentication
+
+Login with email and password to receive a JWT token:
+
+```text
+POST /login
+```
+
+```json
+{
+  "email": "user@example.com",
+  "password": "secret123"
+}
+```
+
+Response:
+
+```json
+{
+  "access_token": "<jwt-token>",
+  "token_type": "bearer"
+}
+```
+
+Use the token in the `Authorization` header for protected routes:
+
+```http
+Authorization: Bearer <jwt-token>
+```
+
 ### Users
 
 Create a user:
@@ -128,6 +158,47 @@ DELETE /users/{user_id}
 ```
 
 Passwords are stored as secure hashes and are never included in API responses.
+
+### Projects
+
+The project endpoints require authentication. Each project belongs to the authenticated user.
+
+Create a project:
+
+```text
+POST /projects
+```
+
+```json
+{
+  "name": "My project",
+  "description": "Project description"
+}
+```
+
+List projects:
+
+```text
+GET /projects
+```
+
+Get one project:
+
+```text
+GET /projects/{project_id}
+```
+
+Update a project:
+
+```text
+PATCH /projects/{project_id}
+```
+
+Delete a project:
+
+```text
+DELETE /projects/{project_id}
+```
 
 ## Run locally without Docker
 
@@ -204,26 +275,31 @@ This deployment is configured to build and launch the app from the repository au
 ├── .github/
 │   └── workflows/
 │       └── ci.yaml
-├── Dockerfile
-├── docker-compose.yml
-├── database.py
-├── models.py
-├── schemas.py
-├── routers/
-│   ├── __init__.py
-│   └── users.py
 ├── alembic/
 │   ├── env.py
+│   ├── README
+│   ├── script.py.mako
 │   └── versions/
 │       └── f22fe3ed6021_create_users_and_projects.py
 ├── alembic.ini
+├── database.py
+├── Dockerfile
+├── docker-compose.yml
 ├── main.py
+├── models.py
 ├── README.md
 ├── requirements.txt
 ├── requirements-dev.txt
+├── routers/
+│   ├── __init__.py
+│   ├── auth.py
+│   ├── project.py
+│   └── users.py
+├── schemas.py
 ├── tests/
 │   └── test_main.py
-└── .gitignore
+├── .gitignore
+└── .dockerignore
 ```
 
 ## Useful commands
@@ -253,4 +329,4 @@ docker compose exec db psql -U postgres -d api_docker -c "SELECT COUNT(*) FROM u
 
 ## Notes
 
-This project is intended as an example of combining FastAPI, PostgreSQL, SQLAlchemy, Alembic, Docker, GitHub Actions, and Render. The current database contains `users` and `projects` tables; authentication will be added in a later step.
+This project is an example of a FastAPI application with PostgreSQL, SQLAlchemy, Alembic, Docker, JWT authentication, GitHub Actions, and Render deployment. The database currently contains `users` and `projects` tables, and project access is restricted to the authenticated user.
